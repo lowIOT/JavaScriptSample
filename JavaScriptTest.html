@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インベーダーゲーム</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+        }
+        canvas {
+            border: 1px solid white;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // ゲーム設定
+        const playerWidth = 50;
+        const playerHeight = 30;
+        const playerSpeed = 5;
+        const bulletSpeed = 7;
+        const enemyWidth = 40;
+        const enemyHeight = 30;
+        const enemySpeed = 2;
+
+        let player = { x: canvas.width / 2 - playerWidth / 2, y: canvas.height - playerHeight - 10, width: playerWidth, height: playerHeight };
+        let bullets = [];
+        let enemies = [];
+        let keys = {};
+
+        // 敵の初期化
+        function initEnemies() {
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 8; j++) {
+                    enemies.push({ x: 50 + j * 60, y: 50 + i * 40, width: enemyWidth, height: enemyHeight });
+                }
+            }
+        }
+
+        initEnemies();
+
+        // ゲームループ
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 更新処理
+        function update() {
+            if (keys['ArrowLeft'] && player.x > 0) player.x -= playerSpeed;
+            if (keys['ArrowRight'] && player.x < canvas.width - player.width) player.x += playerSpeed;
+
+            bullets = bullets.filter(bullet => bullet.y > 0);
+            bullets.forEach(bullet => bullet.y -= bulletSpeed);
+
+            enemies.forEach(enemy => {
+                if (enemy.y > canvas.height) {
+                    gameOver();
+                }
+                enemy.y += enemySpeed;
+            });
+
+            bullets.forEach(bullet => {
+                enemies.forEach((enemy, enemyIndex) => {
+                    if (bullet.x < enemy.x + enemy.width && bullet.x + bullet.width > enemy.x && bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) {
+                        bullets = bullets.filter(b => b !== bullet);
+                        enemies.splice(enemyIndex, 1);
+                    }
+                });
+            });
+        }
+
+        // 描画処理
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            bullets.forEach(bullet => {
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            });
+
+            enemies.forEach(enemy => {
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            });
+        }
+
+        // ゲームオーバー処理
+        function gameOver() {
+            alert('ゲームオーバー');
+            document.location.reload();
+        }
+
+        // キー押下処理
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === ' ') {
+                bullets.push({ x: player.x + player.width / 2 - 2.5, y: player.y, width: 5, height: 10 });
+            }
+        });
+
+        // キー離脱処理
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // ゲーム開始
+        gameLoop();
+    </script>
+</body>
+</html>
